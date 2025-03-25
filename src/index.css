@@ -4,5 +4,35 @@
 
 * {
   font-family: Roboto;
+  scroll-behavior: smooth;
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+/* Add smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improve accessibility */
+:focus {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* Loading skeleton animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
