@@ -1,176 +1,230 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaStar, FaHeart, FaShoppingCart, FaLeaf, FaShippingFast, FaRegCheckCircle } from 'react-icons/fa';
+import React, { useState, useContext, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CartContext } from "../context/CartContext";
+import { FaTimes, FaStar, FaRegStar, FaPlus, FaMinus, FaHeart, FaShare, FaShoppingCart, FaTruck, FaShieldAlt, FaExchangeAlt } from "react-icons/fa";
 
-export default function ProductQuickView({ product, onClose }) {
+export default function ProductQuickView({ product, closeQuickView }) {
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addItem, state } = useContext(CartContext);
   
-  const incrementQuantity = () => {
-    if (quantity < product.stock) {
-      setQuantity(quantity + 1);
-    }
-  };
+  // Check if product is already in cart
+  const existingCartItem = state.cart.find(item => item.product.id === product.id);
+  const isInCart = Boolean(existingCartItem);
   
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
+  // Mock additional images (in a real app, these would come from the product data)
+  const productImages = [
+    product.image,
+    // Additional images would be here in a real implementation
+  ];
   
-  // Prevent scrolling when modal is open
-  React.useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
+  // Keyboard event listener for accessibility
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        closeQuickView();
+      }
     };
-  }, []);
+    window.addEventListener('keydown', handleEsc);
+    
+    // Prevent scrolling of the body when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'auto';
+    };
+  }, [closeQuickView]);
+
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => setQuantity(prev => prev > 1 ? prev - 1 : 1);
+  
+  const handleAddToCart = () => {
+    addItem(product, quantity);
+  };
+  
+  const toggleWishlist = () => {
+    setIsWishlisted(!isWishlisted);
+  };
   
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 sm:p-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-white rounded-xl shadow-xl overflow-hidden max-w-4xl w-full max-h-[90vh] relative"
-        >
-          {/* Close button */}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+         onClick={closeQuickView}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ type: "spring", duration: 0.4 }}
+        className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="relative">
+          {/* Close Button */}
           <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-gray-800 z-10 hover:bg-gray-100 transition-colors duration-200"
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 text-gray-700 hover:bg-gray-100 transition-colors shadow-md"
+            onClick={closeQuickView}
             aria-label="Close quick view"
           >
             <FaTimes />
           </button>
           
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Product Image */}
-            <div className="relative overflow-hidden h-64 sm:h-80 md:h-full">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover" 
-              />
-              {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                {product.isNew && (
-                  <span className="px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded">New</span>
-                )}
-                {product.isSale && (
-                  <span className="px-2 py-1 bg-red-500 text-white text-xs font-medium rounded">Sale</span>
-                )}
-                {product.isOrganic && (
-                  <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded flex items-center gap-1">
-                    <FaLeaf className="text-[10px]" /> Organic
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
+            {/* Product Image Gallery */}
+            <div>
+              <div className="relative bg-gray-50 rounded-lg overflow-hidden mb-4">
+                <motion.img
+                  key={selectedImage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  src={productImages[selectedImage]}
+                  alt={product.name}
+                  className="w-full h-80 object-contain mx-auto"
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="inline-block px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
+                    {product.category}
                   </span>
-                )}
-              </div>
-            </div>
-            
-            {/* Product Details */}
-            <div className="p-6 flex flex-col h-full overflow-y-auto">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h2>
-                
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar 
-                        key={i} 
-                        className={i < Math.floor(product.rating) ? "text-yellow-400" : "text-gray-300"} 
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">{product.rating} ({product.reviews} reviews)</span>
-                </div>
-                
-                <div className="flex items-baseline mb-4">
-                  <span className="text-2xl font-bold text-gray-800">${product.price.toFixed(2)}</span>
-                  {product.oldPrice && (
-                    <span className="ml-3 text-lg text-gray-500 line-through">${product.oldPrice.toFixed(2)}</span>
-                  )}
-                  {product.isSale && (
-                    <span className="ml-3 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">
-                      Save ${(product.oldPrice - product.price).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-                
-                <p className="text-gray-600 mb-6">
-                  Premium quality {product.name.toLowerCase()} sourced directly from local farms. 
-                  Our products are harvested at peak ripeness to ensure maximum flavor and nutrition.
-                </p>
-                
-                {/* Features */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <FaRegCheckCircle className="text-green-500" />
-                    <span>Premium Quality</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <FaRegCheckCircle className="text-green-500" />
-                    <span>Farm Fresh</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <FaLeaf className="text-green-500" />
-                    <span>100% Organic</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <FaShippingFast className="text-green-500" />
-                    <span>Fast Delivery</span>
-                  </div>
                 </div>
               </div>
               
-              <div className="mt-auto pt-4 border-t border-gray-100">
-                {/* Quantity Selector */}
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-gray-700 font-medium">Quantity:</span>
-                  <div className="flex items-center">
-                    <button 
+              {/* Thumbnail Navigation (for when there are multiple images) */}
+              {productImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {productImages.map((image, index) => (
+                    <button
+                      key={index}
+                      className={`w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border-2 ${
+                        selectedImage === index ? 'border-green-500' : 'border-transparent'
+                      }`}
+                      onClick={() => setSelectedImage(index)}
+                    >
+                      <img src={image} alt={`${product.name} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Product Details */}
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h2>
+              
+              {/* Ratings */}
+              <div className="flex items-center gap-1 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  star <= 4 ? (
+                    <FaStar key={star} className="text-amber-400" />
+                  ) : (
+                    <FaRegStar key={star} className="text-amber-400" />
+                  )
+                ))}
+                <span className="text-sm text-gray-500 ml-2">(24 reviews)</span>
+              </div>
+              
+              {/* Price */}
+              <div className="mb-4">
+                <span className="text-xl font-bold text-green-600">{product.price}</span>
+                <span className="text-sm text-gray-500 ml-2 line-through">UGX {parseInt(product.price.replace("UGX ", "").replace(",", "")) * 1.2}</span>
+                <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                  Save 20%
+                </span>
+              </div>
+              
+              {/* Description */}
+              <p className="text-gray-600 mb-6">
+                Our {product.name.toLowerCase()} are freshly harvested from local organic farms. 
+                Packed with essential nutrients and bursting with flavor, they're perfect 
+                for healthy meals and snacks.
+              </p>
+              
+              {/* Add to Cart Section */}
+              <div className="flex flex-col gap-4 mt-auto">
+                <div className="flex items-center gap-4">
+                  {/* Quantity Selector */}
+                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
                       onClick={decrementQuantity}
-                      disabled={quantity <= 1}
-                      className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
                       aria-label="Decrease quantity"
                     >
-                      -
-                    </button>
-                    <span className="w-10 h-8 flex items-center justify-center border-t border-b border-gray-300">
-                      {quantity}
-                    </span>
-                    <button 
+                      <FaMinus className="text-xs" />
+                    </motion.button>
+                    <span className="w-12 text-center text-gray-800 font-medium">{quantity}</span>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
                       onClick={incrementQuantity}
-                      disabled={quantity >= product.stock}
-                      className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
                       aria-label="Increase quantity"
                     >
-                      +
-                    </button>
+                      <FaPlus className="text-xs" />
+                    </motion.button>
                   </div>
+                  
+                  {/* Add to Wishlist */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={toggleWishlist}
+                    className={`p-3 rounded-lg flex items-center justify-center ${
+                      isWishlisted 
+                        ? 'bg-red-50 text-red-500 border border-red-100' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                  >
+                    <FaHeart className={isWishlisted ? 'text-red-500' : ''} />
+                  </motion.button>
+                  
+                  {/* Share Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                    aria-label="Share product"
+                  >
+                    <FaShare />
+                  </motion.button>
                 </div>
                 
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    className="px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label="Add to wishlist"
-                  >
-                    <FaHeart className="text-red-500" />
-                    <span>Add to Wishlist</span>
-                  </button>
-                  <button
-                    className="px-4 py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label="Add to cart"
-                  >
-                    <FaShoppingCart />
-                    <span>Add to Cart</span>
-                  </button>
+                {/* Add to Cart Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAddToCart}
+                  className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 text-white font-medium ${
+                    isInCart 
+                      ? 'bg-green-600' 
+                      : 'bg-green-500 hover:bg-green-600'
+                  }`}
+                >
+                  <FaShoppingCart />
+                  <span>{isInCart ? 'Added to Cart' : 'Add to Cart'}</span>
+                </motion.button>
+              </div>
+              
+              {/* Features */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6 pt-6 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <FaTruck className="text-green-500" />
+                  <span className="text-sm text-gray-600">Free delivery</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaShieldAlt className="text-green-500" />
+                  <span className="text-sm text-gray-600">Quality guaranteed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaExchangeAlt className="text-green-500" />
+                  <span className="text-sm text-gray-600">Easy returns</span>
                 </div>
               </div>
             </div>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
   );
 } 

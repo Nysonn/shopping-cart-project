@@ -1,12 +1,53 @@
 import React, { useEffect, useState, useRef } from "react";
-import { motion, useScroll, useTransform, useAnimation } from "framer-motion";
-import { Link } from "react-router-dom";
-import WelcomeSection from "../components/WelcomeSection";
+import { motion, useScroll, useTransform, useAnimation, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
 import ProductGrid from "../components/ProductGrid";
 import { 
   FaArrowDown, FaLeaf, FaTruck, FaHandshake, FaShoppingBasket, 
-  FaStar, FaRegStar, FaArrowRight, FaClock, FaPhoneAlt, FaFireAlt
+  FaStar, FaRegStar, FaArrowRight, FaClock, FaPhoneAlt, FaFireAlt, FaShieldAlt, FaChevronLeft, FaChevronRight, FaCreditCard, FaHeart
 } from "react-icons/fa";
+import ProductCard from "../components/ProductCard";
+
+// Import images
+import appleImg from '../assets/apples.jpg';
+import carrotImg from '../assets/carrot.jpg';
+import bananaImg from '../assets/banana-pic.jpg';
+import berryImg from '../assets/berry-pic.jpg';
+import heroImg from '../assets/mix-fruits.jpg';
+
+const featuredProducts = [
+  { id: 1, name: "Organic Apples", category: "Fruit", price: "UGX 1,000", image: appleImg, rating: 4.5, reviews: 24, isOrganic: true },
+  { id: 2, name: "Fresh Carrots", category: "Vegetable", price: "UGX 2,000", image: carrotImg, rating: 4.3, reviews: 18, isOrganic: false },
+  { id: 3, name: "Organic Bananas", category: "Fruit", price: "UGX 4,000", image: bananaImg, rating: 4.7, reviews: 32, isOrganic: true },
+  { id: 4, name: "Mixed Berries", category: "Fruit", price: "UGX 3,000", image: berryImg, rating: 4.8, reviews: 42, isOrganic: true },
+];
+
+const testimonials = [
+  {
+    id: 1, 
+    name: "Sarah Johnson",
+    role: "Regular Customer",
+    comment: "The quality of produce from this store is exceptional. Everything is always fresh, and the organic selection is impressive!",
+    rating: 5,
+    image: "https://randomuser.me/api/portraits/women/44.jpg"
+  },
+  {
+    id: 2, 
+    name: "Michael Thompson",
+    role: "Food Enthusiast",
+    comment: "I've been shopping here for 6 months and have never been disappointed. The fruits are always ripe and delicious.",
+    rating: 4,
+    image: "https://randomuser.me/api/portraits/men/32.jpg"
+  },
+  {
+    id: 3, 
+    name: "Jessica Williams",
+    role: "Health Coach",
+    comment: "As a health professional, I recommend this shop to all my clients. Their organic vegetables are top-notch and truly farm-fresh.",
+    rating: 5,
+    image: "https://randomuser.me/api/portraits/women/63.jpg"
+  }
+];
 
 export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -24,6 +65,31 @@ export default function HomePage() {
     minutes: 0,
     seconds: 0
   });
+
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showPromotion, setShowPromotion] = useState(true);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
 
   useEffect(() => {
     setIsLoaded(true);
@@ -51,42 +117,198 @@ export default function HomePage() {
   const categories = [
     "All Products", "Fruits", "Vegetables", "Dairy", "Bakery", "Organic", "Sale Items"
   ];
-  
-  // Demo testimonials data
-  const testimonials = [
+
+  // Auto-rotate testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Hero slides
+  const heroSlides = [
     {
-      name: "Sarah Johnson",
-      role: "Loyal Customer",
-      image: "https://randomuser.me/api/portraits/women/12.jpg",
-      text: "Fresh Harvest has transformed my family's eating habits. The produce is always incredibly fresh and lasts much longer than what I'd buy at the supermarket.",
-      rating: 5
+      title: "Fresh Organic Produce",
+      subtitle: "Farm to Table Quality",
+      description: "Experience the freshest, locally-sourced organic fruits and vegetables delivered straight to your door.",
+      buttonText: "Shop Now",
+      buttonLink: "/products",
+      image: heroImg
     },
     {
-      name: "Michael Chen",
-      role: "Food Blogger",
-      image: "https://randomuser.me/api/portraits/men/32.jpg",
-      text: "As someone who cooks daily, I can taste the difference in Fresh Harvest's organic produce. Their delivery is always on time and their customer service is exceptional.",
-      rating: 5
+      title: "Summer Fruits Sale",
+      subtitle: "Up to a 30% Discount",
+      description: "Enjoy our fresh, juicy seasonal fruits at special prices. Perfect for summer refreshments!",
+      buttonText: "View Offers",
+      buttonLink: "/products",
+      image: berryImg
     },
     {
-      name: "Emma Rodriguez",
-      role: "Health Coach",
-      image: "https://randomuser.me/api/portraits/women/45.jpg",
-      text: "I recommend Fresh Harvest to all my clients. The quality and variety of organic products have helped many achieve their health goals more easily.",
-      rating: 4
+      title: "Eat Healthy, Live Better",
+      subtitle: "Premium Organic Selection",
+      description: "Our organic produce is carefully selected to ensure you get the best quality for your health and well-being.",
+      buttonText: "Learn More",
+      buttonLink: "/about",
+      image: appleImg
     }
   ];
 
+  // Change hero slide
+  const changeSlide = (direction) => {
+    if (direction === "next") {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    } else {
+      setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    }
+  };
+
+  // Auto-rotate hero slides
+  useEffect(() => {
+    const interval = setInterval(() => {
+      changeSlide("next");
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [currentSlide]);
+
+  // Navigate to products page with category filter
+  const navigateToCategory = (category) => {
+    navigate(`/products?category=${category}`);
+  };
+
   return (
-    <div className="min-h-screen font-['Roboto',sans-serif] bg-white" ref={scrollRef}>
-      {/* Progress bar */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 h-1 bg-green-500 z-50 origin-left"
-        style={{ scaleX: scrollYProgress }}
-      />
-      
-      {/* Hero Section with Enhanced Welcome */}
-      <WelcomeSection />
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-white pt-[0px]"
+    >
+      {/* Promotion Banner */}
+      <AnimatePresence>
+        {showPromotion && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-green-600 text-white py-2 relative mt-0"
+          >
+            <div className="container mx-auto px-4 text-center">
+              <p className="text-sm md:text-base">
+                <span className="font-bold">Free delivery</span> on all orders over UGX 20,000! Shop now and save.
+              </p>
+              <button 
+                onClick={() => setShowPromotion(false)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white"
+                aria-label="Close promotion"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hero Carousel */}
+      <section className={`relative h-[70vh] min-h-[500px] bg-gray-100 overflow-hidden ${!showPromotion ? 'mt-[64px]' : ''}`}>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+            className="absolute inset-0 h-full w-full"
+          >
+            <div 
+              className="absolute inset-0 bg-center bg-cover" 
+              style={{ 
+                backgroundImage: `url(${heroSlides[currentSlide].image})`,
+                backgroundPosition: 'center',
+                backgroundSize: 'cover'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/50"></div>
+            </div>
+            
+            <div className="relative h-full flex items-center">
+              <div className="container mx-auto px-4">
+                <div className="max-w-xl">
+                  <motion.span 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="inline-block px-4 py-1 bg-green-600/90 backdrop-blur-sm text-white rounded-full text-sm font-medium mb-4"
+                  >
+                    {heroSlides[currentSlide].subtitle}
+                  </motion.span>
+                  
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6"
+                  >
+                    {heroSlides[currentSlide].title}
+                  </motion.h1>
+                  
+                  <motion.p 
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    className="text-lg text-white/90 mb-8"
+                  >
+                    {heroSlides[currentSlide].description}
+                  </motion.p>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                  >
+                    <Link 
+                      to={heroSlides[currentSlide].buttonLink}
+                      className="inline-flex items-center px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-full font-medium transition-colors shadow-xl"
+                    >
+                      {heroSlides[currentSlide].buttonText}
+                      <FaArrowRight className="ml-2" />
+                    </Link>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Carousel Controls */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
+          {heroSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-3 h-3 rounded-full ${
+                currentSlide === index ? "bg-white" : "bg-white/40"
+              } transition-all duration-300`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+
+        <button
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center"
+          onClick={() => changeSlide("prev")}
+          aria-label="Previous slide"
+        >
+          <FaChevronLeft />
+        </button>
+        
+        <button
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center"
+          onClick={() => changeSlide("next")}
+          aria-label="Next slide"
+        >
+          <FaChevronRight />
+        </button>
+      </section>
 
       {/* Trending Categories with Visual Navigation */}
       <section className="py-12 md:py-20 bg-gradient-to-b from-green-50 to-white overflow-hidden">
@@ -317,35 +539,73 @@ export default function HomePage() {
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                whileHover={{ y: -5 }}
-                className="bg-white p-6 md:p-8 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100"
-              >
-                <div className="flex items-center mb-4">
-                  <img src={testimonial.image} alt={testimonial.name} className="w-14 h-14 rounded-full mr-4 border-2 border-green-100" />
-                  <div>
-                    <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
-                    <p className="text-gray-500 text-sm">{testimonial.role}</p>
+          <div className="max-w-4xl mx-auto relative">
+            <div className="relative bg-white rounded-2xl shadow-lg p-8 md:p-12">
+              <div className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                <span className="text-7xl text-green-200">"</span>
+              </div>
+              
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={activeTestimonial}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative z-10"
+                >
+                  <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+                    <img 
+                      src={testimonials[activeTestimonial].image} 
+                      alt={testimonials[activeTestimonial].name}
+                      className="w-20 h-20 rounded-full border-4 border-green-100"
+                    />
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{testimonials[activeTestimonial].name}</h3>
+                      <p className="text-gray-600">{testimonials[activeTestimonial].role}</p>
+                      <div className="flex items-center mt-2">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar key={i} className={`${i < testimonials[activeTestimonial].rating ? "text-yellow-400" : "text-gray-300"} mr-1`} />
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    i < testimonial.rating ? (
-                      <FaStar key={i} className="text-yellow-400" />
-                    ) : (
-                      <FaRegStar key={i} className="text-yellow-400" />
-                    )
-                  ))}
-                </div>
-                <p className="text-gray-600 leading-relaxed italic">"{testimonial.text}"</p>
-          </motion.div>
-            ))}
+                  
+                  <p className="text-gray-700 text-lg italic">"{testimonials[activeTestimonial].comment}"</p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            
+            <div className="flex justify-center mt-8 gap-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTestimonial(index)}
+                  className={`w-3 h-3 rounded-full ${
+                    activeTestimonial === index ? "bg-green-600" : "bg-gray-300"
+                  } transition-all duration-300`}
+                  aria-label={`Show testimonial ${index + 1}`}
+                />
+              ))}
+            </div>
+            
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
+                className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center mr-4 shadow-sm"
+                aria-label="Previous testimonial"
+              >
+                <FaChevronLeft className="text-gray-600" />
+              </button>
+              
+              <button
+                onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)}
+                className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center shadow-sm"
+                aria-label="Next testimonial"
+              >
+                <FaChevronRight className="text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -416,6 +676,6 @@ export default function HomePage() {
           <FaPhoneAlt />
         </motion.button>
       </motion.div>
-    </div>
+    </motion.div>
   );
 } 
