@@ -6,6 +6,7 @@ import { FaLeaf, FaTruck, FaBox, FaShieldAlt, FaStar, FaAppleAlt, FaCarrot, FaSe
 import PromotionBanner from "../components/PromotionBanner";
 import HeroCarousel from "../components/HeroCarousel";
 import ProductGrid from "../components/ProductGrid";
+import ProductCard from "../components/ProductCard";
 
 // Import images for the hero slides
 import heroImg from "../assets/mix-fruits.jpg";
@@ -272,34 +273,10 @@ export default function HomePage() {
         {/* Replace ProductGrid with random featured products */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {featuredProducts.map((product) => (
-            <motion.div
+            <ProductCard
               key={product.id}
-              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-              whileHover={{ y: -5 }}
-            >
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                />
-              </div>
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg text-gray-800">{product.name}</h3>
-                  <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded">
-                    {product.category}
-                  </span>
-                </div>
-                <p className="text-green-600 font-bold mb-3">{product.price}</p>
-                <button
-                  onClick={() => navigate(`/products/${product.id}`)}
-                  className="w-full py-2 bg-gradient-to-r from-yellow-400 to-green-400 text-white font-medium rounded hover:opacity-90 transition-opacity"
-                >
-                  Add to Cart
-                </button>
-              </div>
-            </motion.div>
+              product={product}
+            />
           ))}
         </div>
         
@@ -329,7 +306,7 @@ export default function HomePage() {
           </div>
           
           {/* Category Grid with Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {categories.map((category, index) => (
               <motion.div
                 key={category.id}
