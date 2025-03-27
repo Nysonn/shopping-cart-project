@@ -1,681 +1,581 @@
 import React, { useEffect, useState, useRef } from "react";
-import { motion, useScroll, useTransform, useAnimation, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import ProductGrid from "../components/ProductGrid";
-import { 
-  FaArrowDown, FaLeaf, FaTruck, FaHandshake, FaShoppingBasket, 
-  FaStar, FaRegStar, FaArrowRight, FaClock, FaPhoneAlt, FaFireAlt, FaShieldAlt, FaChevronLeft, FaChevronRight, FaCreditCard, FaHeart
-} from "react-icons/fa";
-import ProductCard from "../components/ProductCard";
+import { motion, useAnimation, useInView } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { FaLeaf, FaTruck, FaBox, FaShieldAlt, FaStar, FaAppleAlt, FaCarrot, FaSeedling, FaCalendarAlt, FaArrowRight } from "react-icons/fa";
 
-// Import images
-import appleImg from '../assets/apples.jpg';
+import PromotionBanner from "../components/PromotionBanner";
+import HeroCarousel from "../components/HeroCarousel";
+import ProductGrid from "../components/ProductGrid";
+
+// Import images for the hero slides
+import heroImg from "../assets/mix-fruits.jpg";
+import berryImg from "../assets/berry-pic.jpg";
+import appleImg from "../assets/grapes-pic.jpg";
+
+// Import these products from ProductGrid
 import carrotImg from '../assets/carrot.jpg';
 import bananaImg from '../assets/banana-pic.jpg';
-import berryImg from '../assets/berry-pic.jpg';
-import heroImg from '../assets/mix-fruits.jpg';
-
-const featuredProducts = [
-  { id: 1, name: "Organic Apples", category: "Fruit", price: "UGX 1,000", image: appleImg, rating: 4.5, reviews: 24, isOrganic: true },
-  { id: 2, name: "Fresh Carrots", category: "Vegetable", price: "UGX 2,000", image: carrotImg, rating: 4.3, reviews: 18, isOrganic: false },
-  { id: 3, name: "Organic Bananas", category: "Fruit", price: "UGX 4,000", image: bananaImg, rating: 4.7, reviews: 32, isOrganic: true },
-  { id: 4, name: "Mixed Berries", category: "Fruit", price: "UGX 3,000", image: berryImg, rating: 4.8, reviews: 42, isOrganic: true },
-];
-
-const testimonials = [
-  {
-    id: 1, 
-    name: "Sarah Johnson",
-    role: "Regular Customer",
-    comment: "The quality of produce from this store is exceptional. Everything is always fresh, and the organic selection is impressive!",
-    rating: 5,
-    image: "https://randomuser.me/api/portraits/women/44.jpg"
-  },
-  {
-    id: 2, 
-    name: "Michael Thompson",
-    role: "Food Enthusiast",
-    comment: "I've been shopping here for 6 months and have never been disappointed. The fruits are always ripe and delicious.",
-    rating: 4,
-    image: "https://randomuser.me/api/portraits/men/32.jpg"
-  },
-  {
-    id: 3, 
-    name: "Jessica Williams",
-    role: "Health Coach",
-    comment: "As a health professional, I recommend this shop to all my clients. Their organic vegetables are top-notch and truly farm-fresh.",
-    rating: 5,
-    image: "https://randomuser.me/api/portraits/women/63.jpg"
-  }
-];
+import grapesImg from '../assets/grapes-pic.jpg';
+import sweetMelonImg from '../assets/sweet-melon.jpg';
+import orangesImg from '../assets/oranges-pic.jpg';
+import watermelonImg from '../assets/watermelon.jpg';
 
 export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const scrollRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: scrollRef,
-    offset: ["start start", "end start"]
-  });
+  const [showPromotion, setShowPromotion] = useState(true);
+  const [email, setEmail] = useState("");
+
+  const categoryRef = useRef(null);
+  const featuresRef = useRef(null);
+  const testimonialsRef = useRef(null);
+  const newsletterRef = useRef(null);
   
-  const controls = useAnimation();
-  
-  // Time-limited offer countdown
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 24,
-    minutes: 0,
-    seconds: 0
-  });
+  const categoryInView = useInView(categoryRef, { once: true, threshold: 0.2 });
+  const featuresInView = useInView(featuresRef, { once: true, threshold: 0.2 });
+  const testimonialsInView = useInView(testimonialsRef, { once: true, threshold: 0.2 });
+  const newsletterInView = useInView(newsletterRef, { once: true, threshold: 0.2 });
 
   const navigate = useNavigate();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showPromotion, setShowPromotion] = useState(true);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const controls = useAnimation();
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 }
-    }
-  };
-
-  useEffect(() => {
-    setIsLoaded(true);
-    
-    // Timer for limited-time offer
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        const newSeconds = prev.seconds - 1;
-        if (newSeconds < 0) {
-          const newMinutes = prev.minutes - 1;
-          if (newMinutes < 0) {
-            const newHours = prev.hours - 1;
-            return { hours: newHours, minutes: 59, seconds: 59 };
-          }
-          return { ...prev, minutes: newMinutes, seconds: 59 };
-        }
-        return { ...prev, seconds: newSeconds };
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-  
-  // Collect category tags from products (normally you'd get this from your API/data)
-  const categories = [
-    "All Products", "Fruits", "Vegetables", "Dairy", "Bakery", "Organic", "Sale Items"
-  ];
-
-  // Auto-rotate testimonials
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Hero slides
+  // Example hero slides
   const heroSlides = [
     {
       title: "Fresh Organic Produce",
       subtitle: "Farm to Table Quality",
-      description: "Experience the freshest, locally-sourced organic fruits and vegetables delivered straight to your door.",
+      description:
+        "Experience the freshest, locally-sourced organic fruits and vegetables delivered straight to your door.",
       buttonText: "Shop Now",
       buttonLink: "/products",
-      image: heroImg
+      image: heroImg,
     },
     {
       title: "Summer Fruits Sale",
       subtitle: "Up to a 30% Discount",
-      description: "Enjoy our fresh, juicy seasonal fruits at special prices. Perfect for summer refreshments!",
+      description:
+        "Enjoy our fresh, juicy seasonal fruits at special prices. Perfect for summer refreshments!",
       buttonText: "View Offers",
       buttonLink: "/products",
-      image: berryImg
+      image: berryImg,
     },
     {
       title: "Eat Healthy, Live Better",
       subtitle: "Premium Organic Selection",
-      description: "Our organic produce is carefully selected to ensure you get the best quality for your health and well-being.",
+      description:
+        "Our organic produce is carefully selected to ensure you get the best quality for your health and well-being.",
       buttonText: "Learn More",
       buttonLink: "/about",
-      image: appleImg
+      image: appleImg,
+    },
+  ];
+
+  // Featured categories with icons added
+  const categories = [
+    { 
+      id: 1, 
+      name: "Fresh Fruits", 
+      image: "../assets/sweet-melon.jpg", 
+      link: "/products/fruits", 
+      icon: <FaAppleAlt className="text-3xl text-green-600" /> 
+    },
+    { 
+      id: 2, 
+      name: "Vegetables", 
+      image: "../assets/carrot.jpg", 
+      link: "/products/vegetables", 
+      icon: <FaCarrot className="text-3xl text-green-600" /> 
+    },
+    { 
+      id: 3, 
+      name: "Organic Herbs", 
+      image: "/herbs.jpg", 
+      link: "/products/herbs", 
+      icon: <FaSeedling className="text-3xl text-green-600" /> 
+    },
+    { 
+      id: 4, 
+      name: "Seasonal Products", 
+      image: "/seasonal.jpg", 
+      link: "/products/seasonal", 
+      icon: <FaCalendarAlt className="text-3xl text-green-600" /> 
+    },
+  ];
+
+  // Customer testimonials
+  const testimonials = [
+    {
+      id: 1,
+      name: "Sarah Johnson",
+      role: "Health Coach",
+      avatar: "/avatar1.jpg",
+      text: "Fresh Harvest has transformed my meal prep routine. The quality of their organic produce is unmatched!",
+      rating: 5,
+    },
+    {
+      id: 2,
+      name: "Michael Chen",
+      role: "Home Chef",
+      avatar: "/avatar2.jpg",
+      text: "As someone who cooks daily, having access to these premium ingredients has elevated my dishes to restaurant quality.",
+      rating: 5,
+    },
+    {
+      id: 3,
+      name: "Olivia Martinez",
+      role: "Nutrition Expert",
+      avatar: "/avatar3.jpg",
+      text: "I recommend Fresh Harvest to all my clients. Their commitment to organic, sustainable farming practices is impressive.",
+      rating: 4,
+    },
+  ];
+
+  // Add this array of product data
+  const allProducts = [
+    { id: 1, name: "Organic Apples", category: "Fruit", price: "UGX 1,000", image: appleImg },
+    { id: 2, name: "Fresh Carrots", category: "Vegetable", price: "UGX 2,000", image: carrotImg },
+    { id: 3, name: "Organic Bananas", category: "Fruit", price: "UGX 4,000", image: bananaImg },
+    { id: 4, name: "Mixed Berries", category: "Fruit", price: "UGX 3,000", image: berryImg },
+    { id: 5, name: "Purple Grapes", category: "Fruit", price: "UGX 1,000", image: grapesImg },
+    { id: 6, name: "Sweet Melon", category: "Fruit", price: "UGX 5,000", image: sweetMelonImg },
+    { id: 7, name: "Juicy Oranges", category: "Fruit", price: "UGX 2,000", image: orangesImg },
+    { id: 8, name: "Water Melon", category: "Fruit", price: "UGX 5,000", image: watermelonImg },
+  ];
+  
+  // Add this function to select 3 random products
+  const getRandomProducts = (count = 3) => {
+    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+  
+  // Add this state for featured products
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  
+  // Update useEffect to include random product selection
+  useEffect(() => {
+    setIsLoaded(true);
+    setFeaturedProducts(getRandomProducts());
+  }, []);
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    // Implement newsletter subscription logic
+    alert(`Thank you for subscribing with ${email}!`);
+    setEmail("");
+  };
+
+  // Add these helper functions inside the HomePage component
+  const getCategoryFeatures = (categoryId) => {
+    switch (categoryId) {
+      case 1: // Fruits
+        return ["Seasonal Selection", "Local Varieties", "Organic Options"];
+      case 2: // Vegetables
+        return ["Farm Fresh", "Pesticide-Free", "Local Harvest"];
+      case 3: // Herbs
+        return ["Aromatic", "Culinary Uses", "Medicinal Properties"];
+      case 4: // Seasonal
+        return ["Limited Time", "Premium Quality", "Special Discounts"];
+      default:
+        return [];
+    }
+  };
+
+  const getCategoryItemCount = (categoryId) => {
+    // Simulated item counts for each category
+    const counts = {
+      1: 24, // Fruits
+      2: 18, // Vegetables
+      3: 12, // Herbs
+      4: 8,  // Seasonal
+    };
+    return counts[categoryId] || 0;
+  };
+
+  // Add these data arrays right after your other state definitions (around line 133, before the getCategoryFeatures function)
+
+  // Features data with expanded content
+  const features = [
+    {
+      icon: <FaLeaf className="text-2xl text-green-600" />,
+      title: "100% Organic",
+      description: "All our products are certified organic, grown without synthetic pesticides or fertilizers.",
+      benefits: [
+        "Better for your health",
+        "Environmental sustainability",
+        "Superior taste and nutrition"
+      ]
+    },
+    {
+      icon: <FaTruck className="text-2xl text-green-600" />,
+      title: "Fast Delivery",
+      description: "Get your fresh produce delivered to your doorstep within 24 hours of harvesting.",
+      benefits: [
+        "Maximum freshness guaranteed",
+        "Convenient doorstep delivery",
+        "Flexible delivery scheduling"
+      ]
+    },
+    {
+      icon: <FaBox className="text-2xl text-green-600" />,
+      title: "Eco Packaging",
+      description: "Our products come in sustainable, biodegradable packaging to reduce environmental impact.",
+      benefits: [
+        "Compostable materials",
+        "Reduced plastic waste",
+        "Recyclable containers"
+      ]
+    },
+    {
+      icon: <FaShieldAlt className="text-2xl text-green-600" />,
+      title: "Quality Guarantee",
+      description: "Not satisfied? We offer a 100% money-back guarantee on all our products.",
+      benefits: [
+        "Rigorous quality control",
+        "Freshness commitment",
+        "Hassle-free returns"
+      ]
     }
   ];
 
-  // Change hero slide
-  const changeSlide = (direction) => {
-    if (direction === "next") {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    } else {
-      setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-    }
-  };
-
-  // Auto-rotate hero slides
-  useEffect(() => {
-    const interval = setInterval(() => {
-      changeSlide("next");
-    }, 7000);
-    return () => clearInterval(interval);
-  }, [currentSlide]);
-
-  // Navigate to products page with category filter
-  const navigateToCategory = (category) => {
-    navigate(`/products?category=${category}`);
-  };
+  // Stats for the stats bar
+  const stats = [
+    { value: "10k", unit: "+", label: "Happy Customers" },
+    { value: "500", unit: "+", label: "Products Available" },
+    { value: "50", unit: "+", label: "Local Farmers" },
+    { value: "98", unit: "%", label: "Satisfaction Rate" }
+  ];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white pt-[0px]"
+      className="min-h-screen bg-white pt-0"
     >
-      {/* Promotion Banner */}
-      <AnimatePresence>
-        {showPromotion && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-green-600 text-white py-2 relative mt-0"
-          >
-            <div className="container mx-auto px-4 text-center">
-              <p className="text-sm md:text-base">
-                <span className="font-bold">Free delivery</span> on all orders over UGX 20,000! Shop now and save.
-              </p>
-              <button 
-                onClick={() => setShowPromotion(false)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white"
-                aria-label="Close promotion"
-              >
-                ✕
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* 1. Promotion Banner */}
+      <PromotionBanner
+        showPromotion={showPromotion}
+      />
 
-      {/* Hero Carousel */}
-      <section className={`relative h-[70vh] min-h-[500px] bg-gray-100 overflow-hidden ${!showPromotion ? 'mt-[64px]' : ''}`}>
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
-            className="absolute inset-0 h-full w-full"
-          >
-            <div 
-              className="absolute inset-0 bg-center bg-cover" 
-              style={{ 
-                backgroundImage: `url(${heroSlides[currentSlide].image})`,
-                backgroundPosition: 'center',
-                backgroundSize: 'cover'
-              }}
+      {/* 2. Hero Carousel */}
+      <HeroCarousel heroSlides={heroSlides} showPromotion={showPromotion} />
+
+      {/* 3. Product Grid (renamed to Featured Products) */}
+      <section className="py-12 px-4 max-w-7xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Featured Products</h2>
+          <div className="w-20 h-1 bg-gradient-to-r from-yellow-400 to-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Discover our handpicked selection of premium organic products. Fresh from the farm to your table.
+          </p>
+        </div>
+        
+        {/* Replace ProductGrid with random featured products */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {featuredProducts.map((product) => (
+            <motion.div
+              key={product.id}
+              className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+              whileHover={{ y: -5 }}
             >
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            <div className="relative h-full flex items-center">
-              <div className="container mx-auto px-4">
-                <div className="max-w-xl">
-                  <motion.span 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="inline-block px-4 py-1 bg-green-600/90 backdrop-blur-sm text-white rounded-full text-sm font-medium mb-4"
-                  >
-                    {heroSlides[currentSlide].subtitle}
-                  </motion.span>
-                  
-                  <motion.h1 
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6"
-                  >
-                    {heroSlides[currentSlide].title}
-                  </motion.h1>
-                  
-                  <motion.p 
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.5 }}
-                    className="text-lg text-white/90 mb-8"
-                  >
-                    {heroSlides[currentSlide].description}
-                  </motion.p>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.5 }}
-                  >
-                    <Link 
-                      to={heroSlides[currentSlide].buttonLink}
-                      className="inline-flex items-center px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-full font-medium transition-colors shadow-xl"
-                    >
-                      {heroSlides[currentSlide].buttonText}
-                      <FaArrowRight className="ml-2" />
-                    </Link>
-                  </motion.div>
-                </div>
+              <div className="h-48 overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                />
               </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Carousel Controls */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2">
-          {heroSlides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full ${
-                currentSlide === index ? "bg-white" : "bg-white/40"
-              } transition-all duration-300`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-lg text-gray-800">{product.name}</h3>
+                  <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded">
+                    {product.category}
+                  </span>
+                </div>
+                <p className="text-green-600 font-bold mb-3">{product.price}</p>
+                <button
+                  onClick={() => navigate(`/products/${product.id}`)}
+                  className="w-full py-2 bg-gradient-to-r from-yellow-400 to-green-400 text-white font-medium rounded hover:opacity-90 transition-opacity"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </motion.div>
           ))}
         </div>
-
-        <button
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center"
-          onClick={() => changeSlide("prev")}
-          aria-label="Previous slide"
-        >
-          <FaChevronLeft />
-        </button>
         
-        <button
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center"
-          onClick={() => changeSlide("next")}
-          aria-label="Next slide"
-        >
-          <FaChevronRight />
-        </button>
+        <div className="mt-8 text-center">
+          <button 
+            onClick={() => navigate('/products')}
+            className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-green-400 text-white font-medium rounded-full hover:shadow-lg transition-all duration-300"
+          >
+            View All Products
+          </button>
+        </div>
       </section>
 
-      {/* Trending Categories with Visual Navigation */}
-      <section className="py-12 md:py-20 bg-gradient-to-b from-green-50 to-white overflow-hidden">
-        <div className="container mx-auto px-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium tracking-wide mb-3">Discover Our Products</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Browse By Category</h2>
+      {/* 4. Featured Categories */}
+      <section 
+        ref={categoryRef}
+        className="py-16 bg-gradient-to-b from-gray-50 to-white"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-3">Browse Categories</span>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Shop by Category</h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-yellow-400 to-green-400 mx-auto mb-4"></div>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Explore our carefully curated selection of farm-fresh products, organized to help you find exactly what you need.
+              Explore our wide range of fresh, organic products organized by category
             </p>
-          </motion.div>
+          </div>
           
-          {/* Category Pills */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isLoaded ? { opacity: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-3 mb-12"
-          >
+          {/* Category Grid with Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {categories.map((category, index) => (
-              <motion.a
-                key={index}
-                href={`#${category.toLowerCase().replace(/\s+/g, '-')}`}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  index === 0 
-                    ? "bg-green-600 text-white shadow-md" 
-                    : "bg-white text-gray-700 border border-gray-200 hover:border-green-300 hover:bg-green-50"
-                }`}
-              >
-                {category}
-              </motion.a>
-            ))}
-          </motion.div>
-          
-          {/* Visual category cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[
-              {name: "Fresh Fruits", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=500&q=80", color: "from-yellow-300/50"},
-              {name: "Vegetables", image: "https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&w=500&q=80", color: "from-green-400/50"},
-              {name: "Dairy Products", image: "https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=500&q=80", color: "from-blue-300/50"},
-              {name: "Bakery Items", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80", color: "from-amber-300/50"}
-            ].map((category, index) => (
               <motion.div
-                key={index}
+                key={category.id}
+                className="group cursor-pointer"
+                onClick={() => navigate(category.link)}
                 initial={{ opacity: 0, y: 20 }}
-                animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.1 + 0.3 }}
+                animate={categoryInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10" />
-                <div className={`absolute inset-0 bg-gradient-to-br ${category.color} to-transparent opacity-40 group-hover:opacity-60 transition-opacity duration-300`} />
-                <img 
-                  src={category.image} 
-                  alt={category.name} 
-                  className="w-full h-36 md:h-52 object-cover transition-transform duration-700 group-hover:scale-110" 
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                  <h3 className="text-white font-semibold text-lg md:text-xl">{category.name}</h3>
-                  <div className="flex items-center">
-                    <span className="text-xs text-white/90 font-medium">Shop Now</span>
-                    <FaArrowRight className="ml-1 text-xs text-white/90 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Limited-Time Offer Banner */}
-      <section className="py-8 bg-gradient-to-r from-amber-500 to-amber-600 text-white overflow-hidden">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={isLoaded ? { opacity: 1 } : {}}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col md:flex-row items-center justify-between"
-          >
-            <div className="flex items-center mb-4 md:mb-0">
-              <FaFireAlt className="text-yellow-300 text-2xl mr-3 animate-pulse" />
-              <h3 className="text-xl md:text-2xl font-bold">Flash Sale: 15% OFF on All Organic Fruits</h3>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
-                <FaClock className="text-yellow-200" />
-                <div className="flex space-x-1">
-                  <span className="bg-white text-amber-700 text-sm font-bold px-2 py-1 rounded">{String(timeLeft.hours).padStart(2, '0')}</span>
-                  <span className="text-white">:</span>
-                  <span className="bg-white text-amber-700 text-sm font-bold px-2 py-1 rounded">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                  <span className="text-white">:</span>
-                  <span className="bg-white text-amber-700 text-sm font-bold px-2 py-1 rounded">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-amber-700 px-4 py-2 rounded-lg font-medium text-sm shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                Shop Now
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Value Proposition Section - Enhanced */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium tracking-wide mb-3">Why Choose Us</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">The Fresh Harvest Difference</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We're committed to bringing you the finest quality organic produce while supporting sustainable farming practices and our local community.
-            </p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
-          >
-            {[
-              {
-                icon: <FaLeaf className="text-4xl text-green-500" />,
-                title: "100% Organic",
-                description: "All our products are certified organic, ensuring the highest quality and nutritional value with no harmful pesticides or chemicals."
-              },
-              {
-                icon: <FaTruck className="text-4xl text-green-500" />,
-                title: "Fast Delivery",
-                description: "Same-day delivery for orders placed before 2 PM, ensuring maximum freshness. Your produce goes from farm to table in record time."
-              },
-              {
-                icon: <FaHandshake className="text-4xl text-green-500" />,
-                title: "Local Partners",
-                description: "Supporting local farmers and sustainable agriculture in our community. Every purchase helps support family farms and ethical practices."
-              }
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:border-green-200 transition-all duration-300"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-5">
-                  {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Featured Products Section - Enhanced */}
-      <section className="py-16 md:py-24 bg-gray-50">
-        <div className="container mx-auto px-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isLoaded ? { opacity: 1 } : {}}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col md:flex-row md:items-end md:justify-between mb-12"
-          >
-            <div>
-              <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium tracking-wide mb-3">Featured Collection</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Best Sellers</h2>
-              <p className="text-gray-600 max-w-xl">
-              Discover our handpicked selection of fresh, seasonal produce delivered straight from local farms to your table.
-            </p>
-            </div>
-            <motion.a
-              href="/shop"
-              whileHover={{ scale: 1.02 }}
-              className="mt-4 md:mt-0 inline-flex items-center text-green-600 font-medium hover:text-green-700 transition-colors duration-300"
-            >
-              View All Products <FaArrowRight className="ml-2" />
-            </motion.a>
-          </motion.div>
-          
-          {/* Enhanced Product Grid with Quick Shop */}
-            <ProductGrid />
-          
-          <div className="text-center mt-12">
-            <motion.a
-              href="/shop"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="inline-block px-8 py-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors duration-300 shadow-md hover:shadow-lg"
-            >
-              Browse All Products
-            </motion.a>
-          </div>
-        </div>
-      </section>
-      
-      {/* Customer Testimonials */}
-      <section className="py-16 md:py-24 bg-white overflow-hidden">
-        <div className="container mx-auto px-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium tracking-wide mb-3">Customer Stories</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">What Our Customers Say</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Don't just take our word for it. Hear from our satisfied customers about their experience with Fresh Harvest.
-            </p>
-          </motion.div>
-          
-          <div className="max-w-4xl mx-auto relative">
-            <div className="relative bg-white rounded-2xl shadow-lg p-8 md:p-12">
-              <div className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
-                <span className="text-7xl text-green-200">"</span>
-              </div>
-              
-              <AnimatePresence mode="wait">
-                <motion.div 
-                  key={activeTestimonial}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
-                  className="relative z-10"
-                >
-                  <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
-                    <img 
-                      src={testimonials[activeTestimonial].image} 
-                      alt={testimonials[activeTestimonial].name}
-                      className="w-20 h-20 rounded-full border-4 border-green-100"
-                    />
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{testimonials[activeTestimonial].name}</h3>
-                      <p className="text-gray-600">{testimonials[activeTestimonial].role}</p>
-                      <div className="flex items-center mt-2">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar key={i} className={`${i < testimonials[activeTestimonial].rating ? "text-yellow-400" : "text-gray-300"} mr-1`} />
-                        ))}
+                <div className="bg-white rounded-xl shadow-md hover:shadow-lg p-6 transition-all duration-300 border border-gray-100 h-full flex flex-col">
+                  <div className="mb-4 flex justify-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-400/90 to-green-500/90 rounded-lg flex items-center justify-center transform group-hover:rotate-6 transition-transform duration-300">
+                      <div className="w-14 h-14 bg-white rounded-md flex items-center justify-center">
+                        {category.icon}
                       </div>
                     </div>
                   </div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 text-center group-hover:text-green-600 transition-colors">
+                    {category.name}
+                  </h3>
                   
-                  <p className="text-gray-700 text-lg italic">"{testimonials[activeTestimonial].comment}"</p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            
-            <div className="flex justify-center mt-8 gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveTestimonial(index)}
-                  className={`w-3 h-3 rounded-full ${
-                    activeTestimonial === index ? "bg-green-600" : "bg-gray-300"
-                  } transition-all duration-300`}
-                  aria-label={`Show testimonial ${index + 1}`}
-                />
-              ))}
-            </div>
-            
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
-                className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center mr-4 shadow-sm"
-                aria-label="Previous testimonial"
-              >
-                <FaChevronLeft className="text-gray-600" />
-              </button>
-              
-              <button
-                onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)}
-                className="w-10 h-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center shadow-sm"
-                aria-label="Next testimonial"
-              >
-                <FaChevronRight className="text-gray-600" />
-              </button>
-            </div>
+                  {/* Category Features List */}
+                  <ul className="mt-2 space-y-2 text-sm text-gray-600 flex-grow">
+                    {getCategoryFeatures(category.id).map((feature, idx) => (
+                      <li key={idx} className="flex items-center">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {/* Bottom Stats */}
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <span className="text-xs font-medium text-gray-500">
+                      {getCategoryItemCount(category.id)} Items
+                    </span>
+                    <motion.span 
+                      className="text-green-600 text-sm font-medium flex items-center"
+                      whileHover={{ x: 3 }}
+                    >
+                      Browse <FaArrowRight className="ml-1 text-xs" />
+                    </motion.span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* Category Statistics */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-6">
+            {categories.map(category => (
+              <div key={category.id} className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center">
+                  {category.icon}
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-gray-800">{getCategoryItemCount(category.id)}+</div>
+                  <div className="text-xs text-gray-500">{category.name}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Enhanced Newsletter Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 overflow-hidden">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto"
-          >
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl">
-              <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
-                <div className="md:w-3/5">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Join Our Community</h2>
-            <p className="text-gray-600 mb-6">
-                    Subscribe to our newsletter for weekly updates on fresh arrivals, special offers, seasonal recipes, and exclusive discounts.
+      {/* 5. Features/Benefits Section */}
+      <section 
+        ref={featuresRef}
+        className="py-20 relative overflow-hidden"
+      >
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-white z-0"></div>
+        <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white to-transparent"></div>
+        <div className="absolute -left-24 -top-24 w-64 h-64 bg-yellow-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute -right-24 -bottom-24 w-64 h-64 bg-green-200 rounded-full opacity-20 blur-3xl"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-3">Why Choose Us</span>
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">The Fresh Harvest Difference</h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-yellow-400 to-green-400 mx-auto mb-6"></div>
+            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+              We're committed to providing the best organic produce with exceptional service.
+              Here's what sets us apart from the rest.
             </p>
-                  <form className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                      placeholder="Enter your email address"
-                      className="px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 flex-grow"
-                      aria-label="Email for newsletter"
-                    />
-                    <motion.button
-                type="submit"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300 font-medium"
+          </div>
+          
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-8"
+            initial={{ opacity: 0 }}
+            animate={featuresInView ? { opacity: 1 } : {}}
+            transition={{ staggerChildren: 0.2 }}
+          >
+            {features.map((feature, index) => (
+              <motion.div 
+                key={index}
+                className="relative"
+                initial={{ y: 30, opacity: 0 }}
+                animate={featuresInView ? { y: 0, opacity: 1 } : {}}
+                transition={{ delay: index * 0.1 }}
+                whileHover="hover"
               >
-                Subscribe
-                    </motion.button>
-            </form>
-                  <p className="text-gray-500 text-sm mt-3">
-                    By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
-                  </p>
+                {/* Feature Card */}
+                <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl p-8 transition-all duration-300 h-full transform hover:-translate-y-1">
+                  {/* Icon with accents */}
+                  <div className="relative mb-6">
+                    <motion.div 
+                      className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-green-500 rounded-2xl flex items-center justify-center rotate-3"
+                      variants={{
+                        hover: { rotate: 0, scale: 1.05 }
+                      }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center">
+                        {feature.icon}
+                      </div>
+                    </motion.div>
+                    
+                    {/* Accent dot */}
+                    <motion.div 
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full opacity-70"
+                      variants={{
+                        hover: { scale: 1.5, opacity: 1 }
+                      }}
+                    ></motion.div>
+                  </div>
+                  
+                  {/* Content */}
+                  <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-green-600 transition-colors">{feature.title}</h3>
+                  <p className="text-gray-600 mb-5">{feature.description}</p>
+                  
+                  {/* Benefits list */}
+                  <ul className="space-y-2 mb-6">
+                    {feature.benefits.map((benefit, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5 mr-2">
+                          <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        </span>
+                        <span className="text-sm text-gray-600">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {/* Learn more link */}
+                  <motion.div 
+                    className="flex items-center text-green-600 text-sm font-medium cursor-pointer mt-auto"
+                    variants={{
+                      hover: { x: 5 }
+                    }}
+                  >
+                    Learn more <FaArrowRight className="ml-2 text-xs" />
+                  </motion.div>
                 </div>
-                <div className="md:w-2/5 relative">
-                  <div className="absolute -inset-4 bg-green-200/30 rounded-full blur-2xl" />
-                  <img 
-                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80" 
-                    alt="Organic vegetables" 
-                    className="relative rounded-2xl shadow-md"
-                  />
+              </motion.div>
+            ))}
+          </motion.div>
+          
+          {/* Stats bar */}
+          <motion.div 
+            className="mt-20 bg-white rounded-2xl shadow-lg p-6 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.6 }}
+          >
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-1 flex items-center justify-center">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-green-500">{stat.value}</span>
+                  <span className="text-green-500 ml-1">{stat.unit}</span>
                 </div>
+                <p className="text-gray-500 text-sm">{stat.label}</p>
               </div>
-            </div>
+            ))}
+          </motion.div>
+          
+          {/* CTA button */}
+          <motion.div 
+            className="mt-12 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.8 }}
+          >
+            <button
+              onClick={() => navigate('/about')}
+              className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-green-500 text-white font-medium rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+            >
+              Learn About Our Commitment
+            </button>
           </motion.div>
         </div>
       </section>
-      
-      {/* Customer Support Floating Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 1, duration: 0.5 }}
-        className="fixed bottom-6 right-6 z-50"
+
+      {/* 6. Testimonials Section */}
+      <section 
+        ref={testimonialsRef}
+        className="py-16 bg-green-50"
       >
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-700 transition-colors duration-300"
-          aria-label="Customer Support"
-        >
-          <FaPhoneAlt />
-        </motion.button>
-      </motion.div>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">What Our Customers Say</h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-yellow-400 to-green-400 mx-auto mb-4"></div>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Don't just take our word for it - hear from our satisfied customers
+            </p>
+          </div>
+          
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            initial={{ opacity: 0 }}
+            animate={testimonialsInView ? { opacity: 1 } : {}}
+          >
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={testimonial.id}
+                className="bg-white p-6 rounded-lg shadow-md"
+                initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
+                animate={testimonialsInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: index * 0.2 }}
+                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+              >
+                <div className="mb-4 text-center">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <FaStar className="text-xl text-yellow-500" />
+                  </div>
+                  <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
+                  <p className="text-sm text-gray-500">{testimonial.role}</p>
+                </div>
+                <div className="flex justify-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar 
+                      key={i} 
+                      className={`${i < testimonial.rating ? "text-yellow-400" : "text-gray-300"} mx-0.5`} 
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-600 italic text-center">"{testimonial.text}"</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
     </motion.div>
   );
-} 
+}

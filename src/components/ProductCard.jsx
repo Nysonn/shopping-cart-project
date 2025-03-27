@@ -1,13 +1,15 @@
 import React, { useContext, useState } from "react";
 import { motion } from "framer-motion";
 import { CartContext } from "../context/CartContext";
-import { FaShoppingCart, FaHeart, FaEye, FaPlus, FaMinus } from "react-icons/fa";
+import { FaShoppingCart, FaHeart, FaEye, FaPlus, FaMinus, FaStar, FaRegHeart, FaCheck, FaLeaf } from "react-icons/fa";
 
 export default function ProductCard({ product }) {
   const { state, addItem } = useContext(CartContext);
   const [isHovered, setIsHovered] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Check if product is in the cart
   const existingCartItem = state.cart.find(item => item.product.id === product.id);
@@ -17,134 +19,179 @@ export default function ProductCard({ product }) {
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => prev > 1 ? prev - 1 : 1);
   
-  const handleAddToCart = () => {
+  // Extract price as number for discount calculation
+  const priceValue = parseInt(product.price.replace(/\D/g, ""));
+  const hasDiscount = product.id % 3 === 0; // Just for demo - every 3rd product has discount
+  const discountPercentage = hasDiscount ? 15 : 0;
+  const originalPrice = hasDiscount ? Math.round(priceValue * (100 / (100 - discountPercentage))) : null;
+  
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    setAddedToCart(true);
+    
+    // Reset the "Added" state after 2 seconds
+    setTimeout(() => {
+      setAddedToCart(false);
+    }, 2000);
+    
     addItem(product, quantity);
     // Reset quantity after adding
     setQuantity(1);
     setShowQuickAdd(false);
   };
 
+  const toggleFavorite = (e) => {
+    e.stopPropagation();
+    setIsFavorite(!isFavorite);
+  };
+
   return (
-    <motion.div 
-      className="rounded-xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <motion.div
+      className="group relative rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col overflow-hidden"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       whileHover={{ y: -5 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setShowQuickAdd(false);
-      }}
+      layout
     >
-      {/* Product Image with Overlay Actions */}
-      <div className="relative overflow-hidden">
+      {/* Badges */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+        {product.isOrganic && (
+          <span className="flex items-center gap-1 bg-green-50 text-green-700 text-xs font-medium py-1 px-2 rounded-full border border-green-100">
+            <FaLeaf className="text-green-500" /> Organic
+          </span>
+        )}
+        {hasDiscount && (
+          <span className="bg-red-50 text-red-700 text-xs font-bold py-1 px-2 rounded-full border border-red-100">
+            -{discountPercentage}%
+          </span>
+        )}
+      </div>
+      
+      {/* Wishlist Button */}
+      <button
+        className={`absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-300 ${
+          isFavorite 
+            ? "bg-red-50 text-red-500" 
+            : "bg-white/70 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white"
+        }`}
+        onClick={toggleFavorite}
+        aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        {isFavorite ? <FaHeart className="text-lg" /> : <FaRegHeart className="text-lg" />}
+      </button>
+      
+      {/* Product Image */}
+      <div className="relative aspect-square overflow-hidden">
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-56 object-cover transition-transform duration-500 hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        {/* Action buttons that appear on hover */}
-        <div 
-          className={`absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center gap-3 transition-opacity duration-300 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+        
+        {/* Overlay on hover with quick actions */}
+        <motion.div 
+          className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 1 : 0 }}
         >
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            className={`px-4 py-2.5 rounded-full font-medium text-sm transition-all ${
+              addedToCart 
+                ? "bg-green-500 text-white" 
+                : "bg-white text-gray-800 hover:bg-gray-100"
+            }`}
+            onClick={handleAddToCart}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full bg-white text-gray-800 flex items-center justify-center shadow-lg hover:bg-green-500 hover:text-white transition-colors duration-300"
-            onClick={() => setShowQuickAdd(!showQuickAdd)}
-            aria-label="Quick add to cart"
           >
-            <FaShoppingCart className="text-lg" />
+            {addedToCart ? (
+              <span className="flex items-center gap-1">
+                <FaCheck /> Added
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <FaShoppingCart /> Quick Add
+              </span>
+            )}
           </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full bg-white text-gray-800 flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors duration-300"
-            aria-label="Add to wishlist"
-          >
-            <FaHeart className="text-lg" />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-full bg-white text-gray-800 flex items-center justify-center shadow-lg hover:bg-blue-500 hover:text-white transition-colors duration-300"
-            aria-label="Quick view"
-          >
-            <FaEye className="text-lg" />
-          </motion.button>
-        </div>
-        
-        {/* Category badge */}
-        <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+        </motion.div>
+      </div>
+      
+      {/* Product Content */}
+      <div className="flex flex-col flex-grow p-4">
+        {/* Category */}
+        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
           {product.category}
         </div>
-      </div>
-
-      {/* Product Info */}
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">{product.name}</h3>
-        <div className="flex justify-between items-center">
-          <span className="text-green-600 font-bold">{product.price}</span>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span key={star} className="text-amber-400 text-xs">★</span>
+        
+        {/* Product Name */}
+        <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-2 group-hover:text-green-600 transition-colors">
+          {product.name}
+        </h3>
+        
+        {/* Ratings */}
+        <div className="flex items-center gap-1 mb-2">
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <FaStar
+                key={i}
+                className={`text-xs ${
+                  i < Math.floor(product.rating) 
+                    ? "text-yellow-400" 
+                    : i < product.rating 
+                      ? "text-gradient-star" // For half stars (using a special class)
+                      : "text-gray-300"
+                }`}
+              />
             ))}
           </div>
+          <span className="text-xs text-gray-500">({product.reviews})</span>
         </div>
         
-        {/* Quick add quantity selector - shown when toggle is clicked */}
-        {showQuickAdd && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-3 flex items-center justify-between"
-          >
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-              <button 
-                onClick={decrementQuantity}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <FaMinus className="text-xs" />
-              </button>
-              <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-              <button 
-                onClick={incrementQuantity}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <FaPlus className="text-xs" />
-              </button>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleAddToCart}
-              className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600 transition-colors"
-            >
-              Add
-            </motion.button>
-          </motion.div>
-        )}
+        {/* Price */}
+        <div className="mt-auto pt-2 flex items-center">
+          {hasDiscount && (
+            <span className="text-gray-400 text-sm line-through mr-2">UGX {originalPrice.toLocaleString()}</span>
+          )}
+          <span className="font-bold text-lg text-gray-800">{product.price}</span>
+        </div>
         
-        {/* Add to cart button */}
-        {!showQuickAdd && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleAddToCart}
-            className={`mt-3 w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-colors duration-300 ${
-              isInCart 
-                ? 'bg-green-100 text-green-700 border border-green-500' 
-                : 'bg-green-500 text-white hover:bg-green-600'
-            }`}
-          >
-            <FaShoppingCart />
-            <span>{isInCart ? 'Added to Cart' : 'Add to Cart'}</span>
-          </motion.button>
-        )}
+        {/* Add to Cart Button - Desktop/Larger Screens Only */}
+        <button
+          onClick={handleAddToCart}
+          className={`w-full mt-3 py-2.5 rounded-md font-medium transition-all duration-300 hidden sm:flex sm:items-center sm:justify-center gap-2 ${
+            addedToCart 
+              ? "bg-green-500 text-white" 
+              : "bg-gradient-to-r from-yellow-400 to-green-500 text-white hover:from-yellow-500 hover:to-green-600"
+          }`}
+        >
+          {addedToCart ? (
+            <>
+              <FaCheck /> Added to Cart
+            </>
+          ) : (
+            <>
+              <FaShoppingCart /> Add to Cart
+            </>
+          )}
+        </button>
       </div>
+      
+      {/* Mobile Quick Add Button - Fixed at bottom */}
+      <motion.button
+        className={`absolute bottom-0 left-0 right-0 py-2.5 text-center font-medium text-sm sm:hidden transition-all transform ${
+          addedToCart 
+            ? "bg-green-500 text-white translate-y-0" 
+            : isHovered 
+              ? "bg-gradient-to-r from-yellow-400 to-green-500 text-white translate-y-0" 
+              : "translate-y-full"
+        }`}
+        onClick={handleAddToCart}
+        animate={{ translateY: isHovered || addedToCart ? 0 : '100%' }}
+        transition={{ duration: 0.3 }}
+      >
+        {addedToCart ? <span className="flex items-center justify-center gap-1"><FaCheck /> Added</span> : "Add to Cart"}
+      </motion.button>
     </motion.div>
   );
 }

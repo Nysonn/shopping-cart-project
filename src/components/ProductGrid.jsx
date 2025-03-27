@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "./ProductCard";
 import { FaFilter, FaSearch, FaSlidersH, FaTimes } from "react-icons/fa";
 
-import appleImg from '../assets/apples.jpg';
+import appleImg from '../assets/apple-new.jpg';
 import carrotImg from '../assets/carrot.jpg';
 import bananaImg from '../assets/banana-pic.jpg';
 import berryImg from '../assets/berry-pic.jpg';
