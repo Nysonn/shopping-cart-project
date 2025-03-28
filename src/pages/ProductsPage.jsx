@@ -13,6 +13,13 @@ import grapesImg from '../assets/grapes-pic.jpg';
 import sweetMelonImg from '../assets/sweet-melon.jpg';
 import orangesImg from '../assets/oranges-pic.jpg';
 import watermelonImg from '../assets/watermelon.jpg';
+import eggplantImg from '../assets/egg-plant.jpg';
+import pineappleImg from '../assets/pineapple.jpg';
+import potatoImg from '../assets/potato.jpg';
+import cucumberImg from '../assets/cucumber.jpg';
+import onionImg from '../assets/onion.jpg';
+import cabbageImg from '../assets/cabbage.jpg';
+import lemonImg from '../assets/lemon.jpg';
 
 const products = [
   { id: 1, name: "Organic Apples", category: "Fruit", price: "UGX 1,000", image: appleImg, rating: 4.5, reviews: 24, isOrganic: true },
@@ -23,7 +30,14 @@ const products = [
   { id: 6, name: "Sweet Melon", category: "Fruit", price: "UGX 5,000", image: sweetMelonImg, rating: 4.6, reviews: 28, isOrganic: true },
   { id: 7, name: "Juicy Oranges", category: "Fruit", price: "UGX 2,000", image: orangesImg, rating: 4.4, reviews: 36, isOrganic: false },
   { id: 8, name: "Water Melon", category: "Fruit", price: "UGX 5,000", image: watermelonImg, rating: 4.9, reviews: 45, isOrganic: true },
-  { id: 9, name: "Green Grapes", category: "Fruit", price: "UGX 2,000", image: grapesImg, rating: 4.2, reviews: 19, isOrganic: false }
+  { id: 9, name: "Green Grapes", category: "Fruit", price: "UGX 2,000", image: grapesImg, rating: 4.2, reviews: 19, isOrganic: false },
+  { id: 10, name: "Egg Plant", category: "Vegetable", price: "UGX 1,500", image: eggplantImg, rating: 3.2, reviews: 29, isOrganic: true },
+  { id: 11, name: "Pineapple", category: "Fruit", price: "UGX 4,500", image: pineappleImg, rating: 4.2, reviews: 29, isOrganic: true },
+  { id: 10, name: "Potato", category: "Vegetable", price: "UGX 2,500", image: potatoImg, rating: 3.2, reviews: 35, isOrganic: true },
+  { id: 10, name: "Cucumber", category: "Vegetable", price: "UGX 1,500", image: cucumberImg, rating: 3.5, reviews: 29, isOrganic: true },
+  { id: 10, name: "Onion", category: "Vegetable", price: "UGX 2,000", image: onionImg, rating: 3.2, reviews: 39, isOrganic: true },
+  { id: 10, name: "Cabbage", category: "Vegetable", price: "UGX 3,500", image: cabbageImg, rating: 3.5, reviews: 20, isOrganic: true },
+  { id: 10, name: "Lemon", category: "Fruit", price: "UGX 2,500", image: lemonImg, rating: 3.5, reviews: 19, isOrganic: false }
 ];
 
 const categories = ["All", "Fruit", "Vegetable"];
