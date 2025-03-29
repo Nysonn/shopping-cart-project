@@ -23,7 +23,7 @@ export default function App() {
     <CartProvider>
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow pt-16 md:pt-20">
+        <main className="flex-grow pt-16">
           {/* Wrap lazy loaded routes with Suspense */}
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
