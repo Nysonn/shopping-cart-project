@@ -1,0 +1,12 @@
+# sqlc.yaml
+
+version: "1"
+packages:
+  - name: "db"                   # Go package name for generated code
+    path: "internal/db"          # where the code will live
+    queries: "internal/db/queries/products.sql"  # where your .sql query files are
+    schema: "internal/db/schema/schema.sql"    # where your DDL/schema files are
+    engine: "postgresql"         # target database
+    emit_json_tags: true         # include `json:"..."` tags on structs
+    emit_prepared_queries: false # optional; skip prepared-query types
+    emit_interface: true         # generate interfaces for easier mocking

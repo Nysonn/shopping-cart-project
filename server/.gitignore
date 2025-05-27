@@ -1,0 +1,46 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.exe~
+*.test
+*.out
+
+# Output of go coverage tool
+*.coverprofile
+
+# SQLC generated code (if you want to ignore and regenerate)
+# internal/db/models.go
+# internal/db/queries.go
+
+# Dependency directories (remove if you’re checking in vendor/)
+vendor/
+
+# Go workspace file
+go.work
+
+# Application config
+.env
+.env.*    # other env files like .env.local, etc.
+
+# Postgres data directory (if you’re running a local cluster here)
+data/
+
+# Migration lock/state files
+migrations/*.lock
+
+# IDE/editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# MacOS
+.DS_Store
+
+# Logs and temp files
+*.log
+*.tmp
