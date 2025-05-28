@@ -12,6 +12,7 @@ import (
 	"github.com/Nysonn/shopping-cart-project/internal/config"
 	"github.com/Nysonn/shopping-cart-project/internal/db"
 	"github.com/Nysonn/shopping-cart-project/internal/handler"
+	"github.com/Nysonn/shopping-cart-project/internal/middleware"
 	"github.com/Nysonn/shopping-cart-project/internal/repository"
 	"github.com/Nysonn/shopping-cart-project/internal/router"
 	"github.com/Nysonn/shopping-cart-project/internal/service"
@@ -19,6 +20,8 @@ import (
 
 func main() {
 	// 1. Load configuration from environment variables
+
+	//Automatically load the environment variables.
 	_ = godotenv.Load()
 
 	cfg, err := config.LoadConfig()
@@ -48,10 +51,13 @@ func main() {
 	// 5. Set up router
 	mux := router.NewRouter(prodH)
 
+	// 6. Wrap the router with CORS middleware so your React app can call it
+	handlerWithCORS := middleware.CORS(mux)
+
 	// 6. Start HTTP server
 	addr := fmt.Sprintf(":%s", cfg.ServerPort)
 	log.Printf("starting server on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, handlerWithCORS); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }

@@ -11,6 +11,16 @@ import (
 func NewRouter(productHandler *handler.ProductHandler) http.Handler {
 	mux := http.NewServeMux()
 
+	// Serve image files from the React app's src/assets folder.
+	// Adjust the path "../src/assets" if your directory structure differs.
+	mux.Handle(
+		"/assets/",
+		http.StripPrefix(
+			"/assets/",
+			http.FileServer(http.Dir("../src/assets")),
+		),
+	)
+
 	// Route for fetching all products
 	mux.HandleFunc("/api/products", productHandler.GetProducts)
 
