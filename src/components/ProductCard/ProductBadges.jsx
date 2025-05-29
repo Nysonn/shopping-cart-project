@@ -1,10 +1,12 @@
-// ProductBadges.jsx
-import React from "react";
 import { FaLeaf } from "react-icons/fa";
 
 export default function ProductBadges({ product }) {
+  // Handle both string and number prices
+  const priceValue = typeof product.price === 'string' 
+    ? parseInt(product.price.replace(/\D/g, "")) 
+    : product.price;
+    
   // Demo discount logic: every 3rd product has a discount.
-  const priceValue = parseInt(product.price.replace(/\D/g, ""));
   const hasDiscount = product.id % 3 === 0;
   const discountPercentage = hasDiscount ? 15 : 0;
   const originalPrice = hasDiscount ? Math.round(priceValue * (100 / (100 - discountPercentage))) : null;

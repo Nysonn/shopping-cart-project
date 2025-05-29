@@ -17,7 +17,7 @@ func NewRouter(productHandler *handler.ProductHandler) http.Handler {
 		"/assets/",
 		http.StripPrefix(
 			"/assets/",
-			http.FileServer(http.Dir("../src/assets")),
+			http.FileServer(http.Dir("./assets")), // Changed from "../src/assets"
 		),
 	)
 

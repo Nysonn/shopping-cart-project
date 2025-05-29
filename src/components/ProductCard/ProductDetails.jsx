@@ -1,13 +1,20 @@
-// ProductDetails.jsx
-import React from "react";
 import { FaShoppingCart, FaCheck } from "react-icons/fa";
 import Ratings from "./Ratings";
 
 export default function ProductDetails({ product, handleAddToCart, addedToCart }) {
-  const priceValue = parseInt(product.price.replace(/\D/g, ""));
+  // Handle both string and number prices
+  const priceValue = typeof product.price === 'string' 
+    ? parseInt(product.price.replace(/\D/g, "")) 
+    : product.price;
+    
   const hasDiscount = product.id % 3 === 0;
   const discountPercentage = hasDiscount ? 15 : 0;
   const originalPrice = hasDiscount ? Math.round(priceValue * (100 / (100 - discountPercentage))) : null;
+
+  // Format price for display
+  const formatPrice = (price) => {
+    return `UGX ${price.toLocaleString()}`;
+  };
 
   return (
     <div className="flex flex-col flex-grow p-4">
@@ -27,10 +34,12 @@ export default function ProductDetails({ product, handleAddToCart, addedToCart }
       <div className="mt-auto pt-2 flex items-center">
         {hasDiscount && (
           <span className="text-gray-400 text-sm line-through mr-2">
-            UGX {originalPrice.toLocaleString()}
+            {formatPrice(originalPrice)}
           </span>
         )}
-        <span className="font-bold text-lg text-gray-800">{product.price}</span>
+        <span className="font-bold text-lg text-gray-800">
+          {formatPrice(priceValue)}
+        </span>
       </div>
       {/* Desktop Add to Cart Button */}
       <button
